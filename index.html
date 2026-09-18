@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lexis — Dictionary & Vocabulary Studio</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Newsreader for elegant dictionary editorial look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Newsreader', 'Georgia', 'serif'],
+          },
+          colors: {
+            primary: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+            },
+            amberBrand: {
+              500: '#d97706',
+              600: '#b45309',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Custom scrollbar and 3D card flip effects for flashcards */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+    .badge-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body class="bg-stone-50 dark:bg-zinc-950 text-stone-800 dark:text-zinc-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Top Global Header -->
+  <header class="sticky top-0 z-30 backdrop-blur-md bg-white/80 dark:bg-zinc-900/80 border-b border-stone-200 dark:border-zinc-800">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <!-- Logo & Brand -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('lookup')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/10">
+          <i data-lucide="book-marked" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="font-serif font-bold text-2xl tracking-tight text-stone-900 dark:text-white">Lexis</span>
+          <span class="hidden sm:inline-block ml-2 text-xs font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">Studio</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 sm:gap-2">
+        <button id="nav-lookup-btn" onclick="switchTab('lookup')" class="px-3 py-1.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 bg-stone-200/70 dark:bg-zinc-800 text-stone-900 dark:text-white">
+          <i data-lucide="search" class="w-4 h-4"></i>
+          <span>Lookup</span>
+        </button>
+        <button id="nav-wordlists-btn" onclick="switchTab('wordlists')" class="px-3 py-1.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-white">
+          <i data-lucide="bookmark" class="w-4 h-4"></i>
+          <span>Lists</span>
+          <span id="saved-count-pill" class="ml-0.5 px-1.5 py-0.2 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-xs rounded-full font-bold">0</span>
+        </button>
+        <button id="nav-quiz-btn" onclick="switchTab('quiz')" class="px-3 py-1.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-white">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Quiz</span>
+        </button>
+      </nav>
+
+      <!-- Utility Controls (Settings & Theme) -->
+      <div class="flex items-center gap-2">
+        <button id="theme-toggle" class="p-2 rounded-xl text-stone-600 dark:text-zinc-400 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors" title="Toggle Theme">
+          <i data-lucide="sun" id="theme-icon" class="w-5 h-5"></i>
+        </button>
+        <button onclick="toggleSettingsModal(true)" class="p-2 rounded-xl text-stone-600 dark:text-zinc-400 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors relative" title="API Settings">
+          <i data-lucide="settings-2" class="w-5 h-5"></i>
+          <span id="api-status-dot" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Interactive Area -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 md:p-8">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: LOOKUP VIEW -->
+    <!-- ========================================================================= -->
+    <section id="view-lookup" class="space-y-6">
+      
+      <!-- Search Box Card -->
+      <div class="bg-white dark:bg-zinc-900 p-2.5 sm:p-4 rounded-2xl shadow-sm border border-stone-200 dark:border-zinc-800">
+        <form id="search-form" onsubmit="handleSearch(event)" class="relative flex items-center">
+          <i data-lucide="search" class="absolute left-4 w-5 h-5 text-stone-400"></i>
+          <input 
+            type="text" 
+            id="word-input" 
+            placeholder="Search any English word (e.g. serendipity, ephemeral, acumen)..." 
+            autocomplete="off"
+            class="w-full pl-12 pr-28 py-3.5 bg-transparent border-0 rounded-xl focus:ring-2 focus:ring-stone-400 dark:focus:ring-zinc-600 text-stone-900 dark:text-white placeholder:text-stone-400 font-serif text-lg md:text-xl outline-none"
+          />
+          <div class="absolute right-2 flex items-center gap-1">
+            <button 
+              type="button" 
+              id="clear-search-btn" 
+              onclick="clearSearchInput()" 
+              class="hidden p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+            >
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            <button 
+              type="submit" 
+              class="bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-white dark:text-stone-950 text-white font-medium px-4 py-2 rounded-xl text-sm transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>Define</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Search Suggestions / Recent Chips -->
+        <div class="mt-3 pt-3 border-t border-stone-100 dark:border-zinc-800/80 flex flex-wrap items-center gap-1.5 text-xs text-stone-500 dark:text-zinc-400">
+          <span class="flex items-center gap-1 font-medium"><i data-lucide="history" class="w-3.5 h-3.5"></i> Recent:</span>
+          <div id="recent-tags-container" class="flex flex-wrap gap-1.5">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Status Banner (API info / Caching status) -->
+      <div id="source-indicator-bar" class="flex items-center justify-between text-xs px-2 text-stone-500 dark:text-zinc-400">
+        <span id="current-source-label" class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 
+          <span>Mode: <strong class="text-stone-700 dark:text-zinc-300">Merriam-Webster API</strong> (with automatic quota cache)</span>
+        </span>
+        <span id="cache-stat-badge" class="font-mono text-[11px] bg-stone-200/60 dark:bg-zinc-800 px-2 py-0.5 rounded text-stone-600 dark:text-zinc-400">
+          Cached words: 0
+        </span>
+      </div>
+
+      <!-- Loading Skeleton -->
+      <div id="lookup-loading" class="hidden py-12 space-y-4 animate-pulse">
+        <div class="h-10 bg-stone-200 dark:bg-zinc-800 rounded-lg w-1/3"></div>
+        <div class="h-5 bg-stone-200 dark:bg-zinc-800 rounded w-1/4"></div>
+        <div class="space-y-2 pt-4">
+          <div class="h-4 bg-stone-200 dark:bg-zinc-800 rounded w-full"></div>
+          <div class="h-4 bg-stone-200 dark:bg-zinc-800 rounded w-5/6"></div>
+          <div class="h-4 bg-stone-200 dark:bg-zinc-800 rounded w-2/3"></div>
+        </div>
+      </div>
+
+      <!-- Suggestions View (When word not found) -->
+      <div id="suggestions-card" class="hidden bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-6 text-stone-800 dark:text-zinc-200">
+        <div class="flex items-start gap-3">
+          <i data-lucide="help-circle" class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
+          <div class="space-y-3">
+            <h3 class="font-semibold text-base text-amber-900 dark:text-amber-300">Word not found</h3>
+            <p class="text-sm text-stone-600 dark:text-zinc-400">We couldn't locate an exact definition for that word. Did you mean one of these?</p>
+            <div id="suggestions-list" class="flex flex-wrap gap-2 pt-1">
+              <!-- Clickable chips populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Card -->
+      <div id="word-detail-container" class="hidden space-y-6">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Empty State / Welcome Splash -->
+      <div id="lookup-empty-state" class="text-center py-16 px-4">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-stone-100 dark:bg-zinc-800/80 flex items-center justify-center text-stone-400 dark:text-zinc-500">
+          <i data-lucide="book-open" class="w-8 h-8"></i>
+        </div>
+        <h3 class="font-serif text-2xl font-medium text-stone-900 dark:text-white">Discover & Expand Your Lexicon</h3>
+        <p class="mt-2 text-sm text-stone-500 dark:text-zinc-400 max-w-md mx-auto">
+          Type any word above to view definitions, listen to authentic Merriam-Webster audio pronunciations, and save words into custom lists for interactive quizzes.
+        </p>
+        <div class="mt-6 flex justify-center gap-2">
+          <button onclick="quickLookup('sonder')" class="text-xs bg-stone-200/60 dark:bg-zinc-800 hover:bg-stone-200 px-3 py-1.5 rounded-full font-medium transition">Try: "sonder"</button>
+          <button onclick="quickLookup('luminescent')" class="text-xs bg-stone-200/60 dark:bg-zinc-800 hover:bg-stone-200 px-3 py-1.5 rounded-full font-medium transition">Try: "luminescent"</button>
+          <button onclick="quickLookup('ineffable')" class="text-xs bg-stone-200/60 dark:bg-zinc-800 hover:bg-stone-200 px-3 py-1.5 rounded-full font-medium transition">Try: "ineffable"</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: WORDLISTS & BOOKMARKS VIEW -->
+    <!-- ========================================================================= -->
+    <section id="view-wordlists" class="hidden space-y-6">
+      
+      <!-- Wordlists Top Banner & Action Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-stone-200 dark:border-zinc-800 shadow-sm">
+        <div>
+          <h2 class="font-serif text-2xl font-bold text-stone-900 dark:text-white">My Wordlists & Vocabulary</h2>
+          <p class="text-xs sm:text-sm text-stone-500 dark:text-zinc-400 mt-1">Organize saved terms into study collections and review them anytime.</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="openCreateFolderModal()" class="bg-stone-900 dark:bg-white text-white dark:text-stone-900 px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 dark:hover:bg-stone-100 flex items-center gap-1.5 transition">
+            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+            <span>New List</span>
+          </button>
+          <button onclick="exportWordlistsJSON()" class="p-2 border border-stone-200 dark:border-zinc-700 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-xl text-stone-600 dark:text-zinc-300 text-xs flex items-center gap-1" title="Export Backup (JSON)">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span class="hidden md:inline">Export</span>
+          </button>
+          <label class="cursor-pointer p-2 border border-stone-200 dark:border-zinc-700 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-xl text-stone-600 dark:text-zinc-300 text-xs flex items-center gap-1" title="Import Words (JSON)">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            <span class="hidden md:inline">Import</span>
+            <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="importWordlistsJSON(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Folder Selection Tabs / Filter Pills -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2" id="folder-pills-container">
+        <!-- Generated Dynamically: All, Favorites, GRE, etc. -->
+      </div>
+
+      <!-- Search inside saved words -->
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-stone-400"></i>
+        <input 
+          type="text" 
+          id="saved-filter-input" 
+          placeholder="Filter saved words..." 
+          oninput="filterSavedWords(this.value)"
+          class="w-full bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none focus:border-stone-400 dark:focus:border-zinc-600 transition"
+        />
+      </div>
+
+      <!-- Wordlist Grid -->
+      <div id="saved-words-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Empty Wordlist View -->
+      <div id="saved-empty-view" class="hidden text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-dashed border-stone-300 dark:border-zinc-800 p-8">
+        <i data-lucide="bookmark-plus" class="w-12 h-12 mx-auto text-stone-300 dark:text-zinc-700 mb-3"></i>
+        <h4 class="font-serif text-lg font-medium text-stone-700 dark:text-zinc-300">No saved words in this list yet</h4>
+        <p class="text-xs text-stone-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">Look up any word in the Lookup tab and tap the bookmark icon to save it here for quizzes.</p>
+        <button onclick="switchTab('lookup')" class="mt-4 px-4 py-2 text-xs font-semibold bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-xl">Go to Dictionary</button>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: QUIZ & STUDY STUDIO -->
+    <!-- ========================================================================= -->
+    <section id="view-quiz" class="hidden space-y-6">
+
+      <!-- Quiz Setup Panel -->
+      <div id="quiz-setup-panel" class="bg-white dark:bg-zinc-900 p-6 sm:p-8 rounded-2xl border border-stone-200 dark:border-zinc-800 shadow-sm space-y-6">
+        <div>
+          <span class="badge-label text-amber-600 dark:text-amber-400 font-bold">Vocabulary Gym</span>
+          <h2 class="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mt-1">Practice Your Words</h2>
+          <p class="text-sm text-stone-500 dark:text-zinc-400 mt-1">Solidify your retention with targeted active recall exercises generated from your saved lists.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label class="block text-xs font-bold text-stone-600 dark:text-zinc-300 uppercase tracking-wider mb-2">Select Wordlist</label>
+            <select id="quiz-list-selector" class="w-full bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-medium text-stone-900 dark:text-white outline-none">
+              <!-- Options loaded dynamically -->
+            </select>
+            <p id="quiz-list-count-tip" class="text-xs text-stone-400 mt-1.5">Requires at least 4 saved words to generate options.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-stone-600 dark:text-zinc-300 uppercase tracking-wider mb-2">Study Mode</label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="cursor-pointer border border-stone-200 dark:border-zinc-700 has-[:checked]:border-stone-900 dark:has-[:checked]:border-white has-[:checked]:bg-stone-100 dark:has-[:checked]:bg-zinc-800 p-3 rounded-xl flex flex-col items-center text-center transition">
+                <input type="radio" name="quiz-mode" value="def-to-word" checked class="hidden">
+                <i data-lucide="list-checks" class="w-5 h-5 mb-1 text-stone-700 dark:text-zinc-300"></i>
+                <span class="text-xs font-medium">Def &rarr; Word</span>
+              </label>
+              <label class="cursor-pointer border border-stone-200 dark:border-zinc-700 has-[:checked]:border-stone-900 dark:has-[:checked]:border-white has-[:checked]:bg-stone-100 dark:has-[:checked]:bg-zinc-800 p-3 rounded-xl flex flex-col items-center text-center transition">
+                <input type="radio" name="quiz-mode" value="word-to-def" class="hidden">
+                <i data-lucide="help-circle" class="w-5 h-5 mb-1 text-stone-700 dark:text-zinc-300"></i>
+                <span class="text-xs font-medium">Word &rarr; Def</span>
+              </label>
+              <label class="cursor-pointer border border-stone-200 dark:border-zinc-700 has-[:checked]:border-stone-900 dark:has-[:checked]:border-white has-[:checked]:bg-stone-100 dark:has-[:checked]:bg-zinc-800 p-3 rounded-xl flex flex-col items-center text-center transition">
+                <input type="radio" name="quiz-mode" value="flashcards" class="hidden">
+                <i data-lucide="layers" class="w-5 h-5 mb-1 text-stone-700 dark:text-zinc-300"></i>
+                <span class="text-xs font-medium">Flashcard</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button id="start-quiz-btn" onclick="startQuizSession()" class="w-full py-3.5 bg-stone-900 hover:bg-stone-800 dark:bg-white dark:hover:bg-stone-100 text-white dark:text-stone-900 rounded-xl font-semibold text-sm transition shadow flex items-center justify-center gap-2">
+            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+            <span>Begin Study Session</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Multiple Choice Interface -->
+      <div id="quiz-active-mcq" class="hidden space-y-6">
+        <!-- Progress Bar & Score Counter -->
+        <div class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-stone-200 dark:border-zinc-800 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <span id="quiz-question-counter" class="text-xs font-bold font-mono px-2 py-1 bg-stone-100 dark:bg-zinc-800 rounded">1 / 10</span>
+            <span id="quiz-mode-pill" class="text-xs text-stone-500 font-medium">Multiple Choice</span>
+          </div>
+          <div class="w-1/3 bg-stone-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+            <div id="quiz-progress-bar" class="bg-stone-900 dark:bg-white h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
+          </div>
+          <button onclick="quitQuiz()" class="text-xs text-rose-600 hover:underline font-medium">Quit</button>
+        </div>
+
+        <!-- Question Box -->
+        <div class="bg-white dark:bg-zinc-900 p-6 sm:p-8 rounded-2xl border border-stone-200 dark:border-zinc-800 text-center space-y-3">
+          <span id="quiz-prompt-label" class="text-xs font-bold uppercase tracking-wider text-stone-400">Select the correct definition for:</span>
+          <h3 id="quiz-prompt-text" class="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white"></h3>
+          <div id="quiz-prompt-part" class="text-xs italic text-stone-500"></div>
+        </div>
+
+        <!-- Options Container (4 buttons) -->
+        <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Next Question Banner (Appears after answer) -->
+        <div id="quiz-feedback-banner" class="hidden p-4 rounded-xl flex items-center justify-between transition-all">
+          <div class="flex items-center gap-2.5">
+            <div id="quiz-feedback-icon" class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs text-white"></div>
+            <span id="quiz-feedback-text" class="text-sm font-semibold"></span>
+          </div>
+          <button onclick="advanceToNextQuestion()" class="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-bold rounded-lg flex items-center gap-1">
+            <span>Continue</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Interactive Flashcard Interface -->
+      <div id="quiz-active-flashcards" class="hidden space-y-6 max-w-xl mx-auto">
+        <!-- Progress bar -->
+        <div class="flex items-center justify-between text-xs text-stone-500">
+          <span id="fc-progress-label">Card 1 of 5</span>
+          <button onclick="quitQuiz()" class="text-rose-600 hover:underline font-medium">Exit Flashcards</button>
+        </div>
+
+        <!-- 3D Flippable Flashcard Card -->
+        <div class="perspective-1000 w-full h-80 sm:h-96 cursor-pointer select-none" onclick="flipCurrentFlashcard()">
+          <div id="flashcard-inner" class="relative w-full h-full duration-500 transform-style-preserve-3d transition-transform">
+            
+            <!-- Front Face: Word & Syllables -->
+            <div class="absolute inset-0 backface-hidden bg-white dark:bg-zinc-900 border-2 border-stone-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col justify-between shadow-lg">
+              <div class="flex justify-between items-start">
+                <span class="badge-label text-stone-400">Front &bull; Tap anywhere to flip</span>
+                <button type="button" id="fc-audio-btn" onclick="event.stopPropagation(); playCurrentFlashcardAudio()" class="p-2 rounded-full bg-stone-100 dark:bg-zinc-800 text-stone-700 dark:text-zinc-200 hover:scale-105 transition">
+                  <i data-lucide="volume-2" class="w-5 h-5"></i>
+                </button>
+              </div>
+              <div class="text-center my-auto space-y-2">
+                <h3 id="fc-word-front" class="font-serif text-4xl sm:text-5xl font-bold text-stone-900 dark:text-white"></h3>
+                <p id="fc-phonetic-front" class="text-stone-500 dark:text-zinc-400 font-serif italic text-lg"></p>
+                <span id="fc-fl-front" class="inline-block text-xs font-semibold px-2.5 py-1 bg-stone-100 dark:bg-zinc-800 rounded-full text-stone-600 dark:text-zinc-400 uppercase"></span>
+              </div>
+              <div class="text-center text-xs text-stone-400 flex items-center justify-center gap-1">
+                <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+                <span>Click or tap to view definition</span>
+              </div>
+            </div>
+
+            <!-- Back Face: Definition & Examples -->
+            <div class="absolute inset-0 backface-hidden rotate-y-180 bg-stone-900 dark:bg-zinc-950 text-white border-2 border-stone-800 rounded-3xl p-8 flex flex-col justify-between shadow-xl">
+              <div class="flex justify-between items-start">
+                <span class="badge-label text-stone-400">Definition</span>
+                <span id="fc-word-mini" class="font-serif italic text-stone-400"></span>
+              </div>
+              <div class="my-auto space-y-3 overflow-y-auto max-h-48 pr-2">
+                <p id="fc-def-back" class="font-serif text-xl sm:text-2xl leading-snug font-normal text-stone-100"></p>
+                <p id="fc-synonyms-back" class="text-xs text-amber-300/90 italic"></p>
+              </div>
+              <div class="text-center text-xs text-stone-400">
+                <span>Rate your memory to advance:</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Flashcard Grading Buttons -->
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button onclick="gradeFlashcard(false)" class="py-3 px-4 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 hover:bg-rose-100 text-sm font-semibold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>Still Learning</span>
+          </button>
+          <button onclick="gradeFlashcard(true)" class="py-3 px-4 rounded-xl border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 text-sm font-semibold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span>Mastered (Know It)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quiz Summary / Results Modal View -->
+      <div id="quiz-results-screen" class="hidden bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-stone-200 dark:border-zinc-800 text-center max-w-lg mx-auto space-y-6">
+        <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center">
+          <i data-lucide="award" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <h3 class="font-serif text-3xl font-bold text-stone-900 dark:text-white">Session Complete!</h3>
+          <p class="text-sm text-stone-500 mt-1">Great job investing in your lexical agility.</p>
+        </div>
+
+        <div class="p-4 bg-stone-50 dark:bg-zinc-800/60 rounded-2xl flex items-center justify-around">
+          <div>
+            <div id="quiz-result-score" class="font-serif text-3xl font-bold text-stone-900 dark:text-white">0%</div>
+            <div class="text-xs text-stone-400 uppercase tracking-wide">Accuracy</div>
+          </div>
+          <div class="h-8 w-px bg-stone-200 dark:bg-zinc-700"></div>
+          <div>
+            <div id="quiz-result-counts" class="font-serif text-3xl font-bold text-stone-900 dark:text-white">0 / 0</div>
+            <div class="text-xs text-stone-400 uppercase tracking-wide">Correct</div>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button onclick="startQuizSession()" class="flex-1 py-3 bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-semibold rounded-xl text-sm hover:opacity-90 transition">
+            Try Again
+          </button>
+          <button onclick="quitQuiz()" class="flex-1 py-3 border border-stone-200 dark:border-zinc-700 rounded-xl text-sm font-semibold hover:bg-stone-50 dark:hover:bg-zinc-800 transition">
+            Back to Hub
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: SETTINGS & MERRIAM-WEBSTER API CONFIG -->
+  <!-- ========================================================================= -->
+  <div id="modal-settings" class="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 sm:p-7 space-y-5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="key-round" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+          <h3 class="font-serif text-xl font-bold text-stone-900 dark:text-white">API & Engine Configuration</h3>
+        </div>
+        <button onclick="toggleSettingsModal(false)" class="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-sm text-stone-600 dark:text-zinc-300">
+        <p>
+          Configure which source you want to power your dictionary lookup. You can use your own personal <strong>Merriam-Webster Collegiate Dictionary</strong> key or the built-in free fallback.
+        </p>
+
+        <div class="space-y-2">
+          <label class="block font-semibold text-xs text-stone-700 dark:text-zinc-200 uppercase tracking-wider">
+            Merriam-Webster Collegiate API Key
+          </label>
+          <input 
+            type="text" 
+            id="setting-api-key" 
+            placeholder="e.g. 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d" 
+            class="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-xl font-mono text-xs focus:ring-2 focus:ring-stone-400 dark:focus:ring-zinc-600 outline-none"
+          />
+          <span class="text-[11px] text-stone-400 block">
+            Obtain a free collegiate key with 1,000 queries/day at 
+            <a href="https://dictionaryapi.com/" target="_blank" class="text-blue-500 underline">dictionaryapi.com</a>. Stored securely in your browser's local storage.
+          </span>
+        </div>
+
+        <div class="pt-2 border-t border-stone-100 dark:border-zinc-800 space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="setting-use-fallback" class="rounded border-stone-300 text-stone-900 focus:ring-0">
+            <span class="text-xs font-medium">Use Free Dictionary API as instant fallback if key is missing or quota is exhausted</span>
+          </label>
+        </div>
+
+        <!-- Cache Management -->
+        <div class="pt-2 border-t border-stone-100 dark:border-zinc-800 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold text-stone-800 dark:text-zinc-200">Local Response Cache</div>
+            <div class="text-[11px] text-stone-400">Protects your 1,000 req/day quota by saving words locally.</div>
+          </div>
+          <button onclick="clearWordCache()" class="px-3 py-1 text-xs border border-rose-200 dark:border-rose-900 text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition">
+            Clear Cache
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3">
+        <button onclick="toggleSettingsModal(false)" class="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 dark:text-zinc-400 hover:bg-stone-100 dark:hover:bg-zinc-800">
+          Cancel
+        </button>
+        <button onclick="saveApiSettings()" class="px-5 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-xl text-xs font-bold shadow hover:opacity-90">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD CUSTOM FOLDER / WORDLIST -->
+  <div id="modal-new-folder" class="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 w-full max-w-sm rounded-2xl shadow-xl p-6 space-y-4">
+      <h3 class="font-serif text-lg font-bold text-stone-900 dark:text-white">Create New Wordlist</h3>
+      <input 
+        type="text" 
+        id="new-folder-name" 
+        placeholder="e.g. GRE High Frequency, Literary Gems" 
+        class="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-xl text-sm outline-none"
+      />
+      <div class="flex justify-end gap-2">
+        <button onclick="toggleNewFolderModal(false)" class="px-4 py-2 text-xs font-semibold text-stone-600 dark:text-zinc-400">Cancel</button>
+        <button onclick="createFolderSubmit()" class="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-xl text-xs font-bold">Create List</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       APPLICATION STATE & STORAGE KEYS
+       ========================================================================= */
+    const STORAGE_KEYS = {
+      API_KEY: 'lexis_mw_api_key',
+      USE_FALLBACK: 'lexis_use_fallback',
+      CACHED_WORDS: 'lexis_cached_words_dict',
+      SAVED_WORDS: 'lexis_saved_words_list',
+      FOLDERS: 'lexis_folder_names',
+      RECENT_SEARCHES: 'lexis_recent_queries',
+      THEME: 'lexis_theme_pref'
+    };
+
+    let appState = {
+      apiKey: localStorage.getItem(STORAGE_KEYS.API_KEY) || '',
+      useFallback: localStorage.getItem(STORAGE_KEYS.USE_FALLBACK) !== 'false',
+      cachedWords: JSON.parse(localStorage.getItem(STORAGE_KEYS.CACHED_WORDS) || '{}'),
+      savedWords: JSON.parse(localStorage.getItem(STORAGE_KEYS.SAVED_WORDS) || '[]'),
+      folders: JSON.parse(localStorage.getItem(STORAGE_KEYS.FOLDERS) || '["Favorites", "GRE Prep", "To Review"]'),
+      recentSearches: JSON.parse(localStorage.getItem(STORAGE_KEYS.RECENT_SEARCHES) || '["serendipity", "ephemeral", "eloquent"]'),
+      currentFolderFilter: 'All',
+      activeTab: 'lookup',
+      currentWordData: null,
+      quizSession: {
+        active: false,
+        mode: 'def-to-word',
+        questions: [],
+        currentIndex: 0,
+        score: 0,
+        answered: false
+      },
+      flashcardSession: {
+        cards: [],
+        currentIndex: 0,
+        isFlipped: false,
+        knownCount: 0
+      }
+    };
+
+    /* =========================================================================
+       MERRIAM-WEBSTER MARKUP PARSER & AUDIO RESOLVER
+       ========================================================================= */
+    /**
+     * Parse Merriam-Webster collegiate markup syntax like {bc}, {it}, {b}, {sx|...||}
+     */
+    function parseMWMarkup(rawText) {
+      if (!rawText || typeof rawText !== 'string') return '';
+
+      let parsed = rawText
+        // Replace bold colon marker
+        .replace(/\{bc\}/g, ': ')
+        // Replace italics and bold
+        .replace(/\{it\}(.*?)\{\/it\}/g, '<em class="font-serif italic text-stone-700 dark:text-zinc-300">$1</em>')
+        .replace(/\{b\}(.*?)\{\/b\}/g, '<strong class="font-semibold text-stone-900 dark:text-white">$1</strong>')
+        // Replace word links: {sx|target||} -> target
+        .replace(/\{sx\|([^|]+)\|[^}]*\}/g, '<span class="text-blue-600 dark:text-blue-400 font-medium underline cursor-pointer" onclick="quickLookup(\'$1\')">$1</span>')
+        // Replace word illustration {wi|...|}
+        .replace(/\{wi\}(.*?)\{\/wi\}/g, '<em class="italic">$1</em>')
+        // Replace quote markers
+        .replace(/\{qword\}(.*?)\{\/qword\}/g, '<span>$1</span>')
+        // Strip other remaining unknown {tag|data}
+        .replace(/\{[a-z_]+(?:\|([^|}]+))?[^}]*\}/g, (match, p1) => p1 || '');
+
+      return parsed;
+    }
+
+    /**
+     * Compute Merriam-Webster audio pronunciation URL based on official subdirectory rule:
+     * - if filename begins with 'bix', subdir is 'bix'
+     * - if filename begins with 'gg', subdir is 'gg'
+     * - if filename begins with number or punct, subdir is 'number'
+     * - else subdir is first letter
+     */
+    function buildMWAudioUrl(audioFilename) {
+      if (!audioFilename) return null;
+      let subdir = audioFilename[0];
+      if (audioFilename.startsWith('bix')) subdir = 'bix';
+      else if (audioFilename.startsWith('gg')) subdir = 'gg';
+      else if (/^[^a-zA-Z]/.test(audioFilename)) subdir = 'number';
+
+      return `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFilename}.mp3`;
+    }
+
+    /* =========================================================================
+       DICTIONARY API CLIENT & CACHING PIPELINE
+       ========================================================================= */
+    async function fetchWordDefinition(wordQuery) {
+      const cleanWord = wordQuery.trim().toLowerCase();
+      if (!cleanWord) return null;
+
+      // 1. Check Quota-Saving Local Cache first
+      if (appState.cachedWords[cleanWord]) {
+        console.log(`Loaded "${cleanWord}" from offline local cache`);
+        return { source: 'cache', data: appState.cachedWords[cleanWord] };
+      }
+
+      // 2. Try Merriam-Webster Collegiate API if key configured
+      if (appState.apiKey && appState.apiKey.trim().length > 5) {
+        try {
+          const mwEndpoint = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(cleanWord)}?key=${appState.apiKey.trim()}`;
+          const response = await fetch(mwEndpoint);
+          if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+          
+          const rawData = await response.json();
+
+          // If word not found, M-W returns an array of strings (spelling suggestions)
+          if (Array.isArray(rawData) && (rawData.length === 0 || typeof rawData[0] === 'string')) {
+            return {
+              source: 'merriam-webster',
+              found: false,
+              suggestions: rawData
+            };
+          }
+
+          // Parse primary matching entries from Merriam-Webster
+          const parsedEntry = transformMWEntry(cleanWord, rawData);
+          
+          // Cache successful result
+          cacheWord(cleanWord, parsedEntry);
+          return { source: 'merriam-webster', found: true, data: parsedEntry };
+        } catch (mwErr) {
+          console.warn("Merriam-Webster query failed, falling back if allowed:", mwErr);
+          if (!appState.useFallback) {
+            throw mwErr;
+          }
+        }
+      }
+
+      // 3. Fallback to Free Dictionary API (Zero-config, ready to run right out of the box)
+      try {
+        const freeApiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`;
+        const fbResponse = await fetch(freeApiUrl);
+        if (!fbResponse.ok) {
+          return { source: 'fallback', found: false, suggestions: [] };
+        }
+        const fbData = await fbResponse.json();
+        const parsedEntry = transformFreeApiEntry(cleanWord, fbData);
+        cacheWord(cleanWord, parsedEntry);
+        return { source: 'fallback-api', found: true, data: parsedEntry };
+      } catch (err) {
+        console.error("All dictionary fetch options exhausted:", err);
+        return { source: 'error', found: false, suggestions: [] };
+      }
+    }
+
+    /**
+     * Transform Merriam-Webster API array to standard normalized shape
+     */
+    function transformMWEntry(targetWord, entries) {
+      const primary = entries[0];
+      
+      // Extract audio
+      let audioUrl = null;
+      let phonetic = primary.hwi?.prs?.[0]?.mw || '';
+      const audioId = primary.hwi?.prs?.[0]?.sound?.audio;
+      if (audioId) {
+        audioUrl = buildMWAudioUrl(audioId);
+      }
+
+      // Extract Syllable division
+      const syllables = primary.hwi?.hw?.replace(/\*/g, '·') || targetWord;
+
+      // Extract Definitions grouped by part of speech
+      const senses = [];
+      const synonyms = [];
+
+      entries.forEach(entry => {
+        const fl = entry.fl || 'definition';
+        const shortDefs = entry.shortdef || [];
+
+        // Check for synonyms if present
+        if (entry.syns && Array.isArray(entry.syns)) {
+          entry.syns.forEach(synObj => {
+            if (synObj.pt) {
+              // Parse synonym lists
+              const matched = synObj.pt.join(' ').match(/\{it\}(.*?)\{\/it\}/g);
+              if (matched) {
+                matched.forEach(m => synonyms.push(m.replace(/<\/?it>/g, '').replace(/\{|\}/g, '')));
+              }
+            }
+          });
+        }
+
+        shortDefs.forEach(def => {
+          senses.push({
+            partOfSpeech: fl,
+            definition: parseMWMarkup(def),
+            rawDefinition: def
+          });
+        });
+      });
+
+      // Etymology if available
+      let etymology = null;
+      if (primary.et && Array.isArray(primary.et) && primary.et[0]) {
+        etymology = parseMWMarkup(primary.et[0][1]);
+      }
+
+      return {
+        word: targetWord,
+        displayWord: primary.hwi?.hw?.replace(/\*/g, '') || targetWord,
+        syllables: syllables,
+        phonetic: phonetic,
+        audioUrl: audioUrl,
+        senses: senses.length > 0 ? senses : [{ partOfSpeech: primary.fl || 'n', definition: 'No definition available.' }],
+        synonyms: [...new Set(synonyms)].slice(0, 10),
+        etymology: etymology
+      };
+    }
+
+    /**
+     * Transform Free Dictionary API payload into uniform shape
+     */
+    function transformFreeApiEntry(targetWord, data) {
+      const entry = data[0];
+      const audioObj = entry.phonetics?.find(p => p.audio && p.audio.length > 0);
+      const audioUrl = audioObj ? audioObj.audio : null;
+      const phonetic = entry.phonetic || entry.phonetics?.[0]?.text || '';
+
+      const senses = [];
+      const synonyms = [];
+
+      if (entry.meanings) {
+        entry.meanings.forEach(m => {
+          const fl = m.partOfSpeech || 'general';
+          if (m.synonyms) synonyms.push(...m.synonyms);
+          m.definitions?.forEach(d => {
+            senses.push({
+              partOfSpeech: fl,
+              definition: d.definition,
+              rawDefinition: d.definition,
+              example: d.example || null
+            });
+          });
+        });
+      }
+
+      return {
+        word: targetWord,
+        displayWord: entry.word || targetWord,
+        syllables: targetWord,
+        phonetic: phonetic,
+        audioUrl: audioUrl,
+        senses: senses,
+        synonyms: [...new Set(synonyms)].slice(0, 10),
+        etymology: null
+      };
+    }
+
+    function cacheWord(word, data) {
+      appState.cachedWords[word] = data;
+      try {
+        localStorage.setItem(STORAGE_KEYS.CACHED_WORDS, JSON.stringify(appState.cachedWords));
+        updateCacheCountDisplay();
+      } catch (e) {
+        console.warn("Storage quota reached for local dictionary cache");
+      }
+    }
+
+    function updateCacheCountDisplay() {
+      const count = Object.keys(appState.cachedWords).length;
+      const el = document.getElementById('cache-stat-badge');
+      if (el) el.textContent = `Cached words: ${count}`;
+    }
+
+    /* =========================================================================
+       LOOKUP & DICTIONARY UI RENDERING
+       ========================================================================= */
+    async function handleSearch(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('word-input');
+      const word = input.value.trim().toLowerCase();
+      if (!word) return;
+
+      showLoading(true);
+      hideAllResults();
+
+      try {
+        const result = await fetchWordDefinition(word);
+        showLoading(false);
+
+        if (!result) {
+          showEmptyState(true);
+          return;
+        }
+
+        addRecentSearch(word);
+
+        if (!result.found && result.suggestions && result.suggestions.length > 0) {
+          renderSuggestions(word, result.suggestions);
+        } else if (result.found && result.data) {
+          appState.currentWordData = result.data;
+          renderWordDetail(result.data, result.source);
+        } else {
+          renderSuggestions(word, []);
+        }
+      } catch (error) {
+        showLoading(false);
+        console.error("Lookup error:", error);
+        alertUser("Network error or invalid API key. Falling back...");
+      }
+    }
+
+    function quickLookup(word) {
+      const input = document.getElementById('word-input');
+      input.value = word;
+      switchTab('lookup');
+      handleSearch();
+    }
+
+    function renderWordDetail(wordData, source) {
+      const container = document.getElementById('word-detail-container');
+      container.classList.remove('hidden');
+
+      const isSaved = appState.savedWords.some(w => w.word.toLowerCase() === wordData.word.toLowerCase());
+
+      // Generate HTML for definition list
+      let sensesHtml = '';
+      wordData.senses.forEach((sense, idx) => {
+        sensesHtml += `
+          <li class="flex items-start gap-3 group">
+            <span class="font-mono text-xs text-stone-400 dark:text-zinc-500 mt-1 shrink-0 font-bold">${idx + 1}.</span>
+            <div class="space-y-1">
+              <div class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400/90">${sense.partOfSpeech}</div>
+              <div class="font-serif text-lg text-stone-800 dark:text-zinc-200 leading-relaxed">${sense.definition}</div>
+              ${sense.example ? `<div class="text-xs text-stone-500 italic mt-0.5">&ldquo;${sense.example}&rdquo;</div>` : ''}
+            </div>
+          </li>
+        `;
+      });
+
+      // Synonyms section if exists
+      let synonymsHtml = '';
+      if (wordData.synonyms && wordData.synonyms.length > 0) {
+        const synTags = wordData.synonyms.map(syn => `
+          <button onclick="quickLookup('${syn}')" class="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg text-xs font-medium text-stone-700 dark:text-zinc-300 transition">
+            ${syn}
+          </button>
+        `).join('');
+
+        synonymsHtml = `
+          <div class="mt-6 pt-5 border-t border-stone-100 dark:border-zinc-800">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-400 block mb-2">Related Synonyms</span>
+            <div class="flex flex-wrap gap-1.5">${synTags}</div>
+          </div>
+        `;
+      }
+
+      // Etymology block
+      let etymologyHtml = '';
+      if (wordData.etymology) {
+        etymologyHtml = `
+          <div class="mt-5 pt-4 border-t border-stone-100 dark:border-zinc-800 text-xs text-stone-500">
+            <strong class="text-stone-700 dark:text-zinc-300 font-semibold uppercase tracking-wider block mb-1">Etymology</strong>
+            <span class="font-serif leading-relaxed">${wordData.etymology}</span>
+          </div>
+        `;
+      }
+
+      // Audio Play Button
+      const audioBtnHtml = wordData.audioUrl ? `
+        <button onclick="playAudio('${wordData.audioUrl}')" class="p-2.5 rounded-xl bg-stone-100 dark:bg-zinc-800 hover:bg-stone-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-zinc-200 transition shadow-sm flex items-center gap-1.5" title="Listen to pronunciation">
+          <i data-lucide="volume-2" class="w-5 h-5"></i>
+          <span class="text-xs font-semibold pr-1">Play</span>
+        </button>
+      ` : '';
+
+      container.innerHTML = `
+        <div class="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-stone-200 dark:border-zinc-800 shadow-sm transition">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 dark:border-zinc-800/80 pb-6">
+            <div>
+              <div class="flex items-baseline gap-3 flex-wrap">
+                <h2 class="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-stone-900 dark:text-white capitalize">${wordData.displayWord}</h2>
+                <span class="text-stone-400 font-mono text-sm tracking-wider">${wordData.syllables}</span>
+              </div>
+              <div class="mt-1 flex items-center gap-3">
+                ${wordData.phonetic ? `<span class="font-serif italic text-lg text-amber-700 dark:text-amber-400">\\${wordData.phonetic}\\</span>` : ''}
+              </div>
+            </div>
+
+            <!-- Action buttons (Audio & Bookmark) -->
+            <div class="flex items-center gap-2">
+              ${audioBtnHtml}
+              <button id="bookmark-btn" onclick="toggleBookmarkCurrentWord()" class="p-2.5 rounded-xl border ${isSaved ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/40 text-amber-600' : 'border-stone-200 dark:border-zinc-700 text-stone-600 dark:text-zinc-300 hover:bg-stone-50 dark:hover:bg-zinc-800'} transition flex items-center gap-1.5">
+                <i data-lucide="${isSaved ? 'bookmark-check' : 'bookmark-plus'}" class="w-5 h-5"></i>
+                <span class="text-xs font-semibold pr-1">${isSaved ? 'Saved' : 'Save'}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Senses / Meanings -->
+          <div class="pt-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-400 block mb-4">Definitions</span>
+            <ul class="space-y-4">
+              ${sensesHtml}
+            </ul>
+          </div>
+
+          ${synonymsHtml}
+          ${etymologyHtml}
+        </div>
+      `;
+
+      lucide.createIcons();
+    }
+
+    function renderSuggestions(originalWord, suggestions) {
+      const card = document.getElementById('suggestions-card');
+      const list = document.getElementById('suggestions-list');
+      card.classList.remove('hidden');
+
+      if (!suggestions || suggestions.length === 0) {
+        list.innerHTML = `<span class="text-xs italic text-stone-500">No alternate spelling recommendations found.</span>`;
+        return;
+      }
+
+      list.innerHTML = suggestions.slice(0, 8).map(sug => `
+        <button onclick="quickLookup('${sug}')" class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-800 rounded-xl text-xs font-semibold text-stone-800 dark:text-zinc-200 hover:bg-amber-100/50 dark:hover:bg-amber-950/60 transition">
+          ${sug}
+        </button>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function showLoading(isLoading) {
+      document.getElementById('lookup-loading').classList.toggle('hidden', !isLoading);
+    }
+
+    function hideAllResults() {
+      document.getElementById('word-detail-container').classList.add('hidden');
+      document.getElementById('suggestions-card').classList.add('hidden');
+      document.getElementById('lookup-empty-state').classList.add('hidden');
+    }
+
+    function showEmptyState(show) {
+      document.getElementById('lookup-empty-state').classList.toggle('hidden', !show);
+    }
+
+    function clearSearchInput() {
+      const inp = document.getElementById('word-input');
+      inp.value = '';
+      inp.focus();
+      document.getElementById('clear-search-btn').classList.add('hidden');
+    }
+
+    document.getElementById('word-input').addEventListener('input', (e) => {
+      document.getElementById('clear-search-btn').classList.toggle('hidden', !e.target.value.length);
+    });
+
+    function playAudio(url) {
+      if (!url) return;
+      try {
+        const audio = new Audio(url);
+        audio.play().catch(e => console.warn("Audio autoplay prevented:", e));
+      } catch (e) {
+        console.error("Audio playback error:", e);
+      }
+    }
+
+    /* =========================================================================
+       BOOKMARKS & WORDLIST MANAGEMENT
+       ========================================================================= */
+    function toggleBookmarkCurrentWord() {
+      if (!appState.currentWordData) return;
+      const target = appState.currentWordData;
+      const index = appState.savedWords.findIndex(w => w.word.toLowerCase() === target.word.toLowerCase());
+
+      if (index >= 0) {
+        // Remove bookmark
+        appState.savedWords.splice(index, 1);
+      } else {
+        // Add bookmark
+        const cleanItem = {
+          word: target.word,
+          displayWord: target.displayWord,
+          phonetic: target.phonetic,
+          audioUrl: target.audioUrl,
+          definition: target.senses[0]?.definition || '',
+          rawDefinition: target.senses[0]?.rawDefinition || target.senses[0]?.definition || '',
+          partOfSpeech: target.senses[0]?.partOfSpeech || 'n',
+          synonyms: target.synonyms || [],
+          folder: 'Favorites',
+          savedAt: new Date().toISOString()
+        };
+        appState.savedWords.unshift(cleanItem);
+      }
+
+      saveWordsToStorage();
+      renderWordDetail(appState.currentWordData, 'active');
+      renderSavedWords();
+      updatePillCounts();
+    }
+
+    function saveWordsToStorage() {
+      localStorage.setItem(STORAGE_KEYS.SAVED_WORDS, JSON.stringify(appState.savedWords));
+      localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(appState.folders));
+    }
+
+    function renderSavedWords() {
+      const container = document.getElementById('saved-words-grid');
+      const emptyView = document.getElementById('saved-empty-view');
+      const folderPills = document.getElementById('folder-pills-container');
+
+      // Update folder filter buttons
+      let allFolders = ['All', ...appState.folders];
+      folderPills.innerHTML = allFolders.map(folder => {
+        const count = folder === 'All' 
+          ? appState.savedWords.length 
+          : appState.savedWords.filter(w => w.folder === folder).length;
+        const isActive = appState.currentFolderFilter === folder;
+
+        return `
+          <button onclick="setFolderFilter('${folder}')" class="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+            isActive 
+              ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm' 
+              : 'bg-white dark:bg-zinc-900 text-stone-600 dark:text-zinc-400 border border-stone-200 dark:border-zinc-800 hover:bg-stone-100 dark:hover:bg-zinc-800'
+          }">
+            <span>${folder}</span>
+            <span class="text-[10px] opacity-75">(${count})</span>
+          </button>
+        `;
+      }).join('');
+
+      // Filter words
+      let list = appState.savedWords;
+      if (appState.currentFolderFilter !== 'All') {
+        list = list.filter(w => w.folder === appState.currentFolderFilter);
+      }
+
+      const queryFilter = (document.getElementById('saved-filter-input')?.value || '').toLowerCase().trim();
+      if (queryFilter) {
+        list = list.filter(w => w.word.toLowerCase().includes(queryFilter) || w.definition.toLowerCase().includes(queryFilter));
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '';
+        emptyView.classList.remove('hidden');
+        return;
+      }
+
+      emptyView.classList.add('hidden');
+      container.innerHTML = list.map(item => `
+        <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 p-5 rounded-2xl shadow-sm hover:border-stone-300 dark:hover:border-zinc-700 transition space-y-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h4 class="font-serif text-2xl font-bold text-stone-900 dark:text-white capitalize cursor-pointer hover:underline" onclick="quickLookup('${item.word}')">
+                  ${item.displayWord || item.word}
+                </h4>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-xs uppercase font-bold text-amber-700 dark:text-amber-400">${item.partOfSpeech}</span>
+                  ${item.phonetic ? `<span class="text-xs font-serif italic text-stone-400">\\${item.phonetic}\\</span>` : ''}
+                </div>
+              </div>
+              
+              <!-- Folder select badge -->
+              <select onchange="reassignWordFolder('${item.word}', this.value)" class="text-[11px] font-semibold bg-stone-100 dark:bg-zinc-800 text-stone-700 dark:text-zinc-300 border-0 rounded-lg px-2 py-1 outline-none">
+                ${appState.folders.map(f => `<option value="${f}" ${item.folder === f ? 'selected' : ''}>${f}</option>`).join('')}
+              </select>
+            </div>
+
+            <p class="font-serif text-stone-700 dark:text-zinc-300 text-sm mt-3 line-clamp-3 leading-relaxed">
+              ${item.definition}
+            </p>
+          </div>
+
+          <div class="pt-3 border-t border-stone-100 dark:border-zinc-800/80 flex items-center justify-between text-xs text-stone-400">
+            <div class="flex items-center gap-2">
+              ${item.audioUrl ? `
+                <button onclick="playAudio('${item.audioUrl}')" class="p-1.5 hover:text-stone-900 dark:hover:text-white transition" title="Listen">
+                  <i data-lucide="volume-2" class="w-4 h-4"></i>
+                </button>
+              ` : ''}
+              <button onclick="quickLookup('${item.word}')" class="hover:text-stone-900 dark:hover:text-white transition flex items-center gap-1 font-medium">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <span>Lookup</span>
+              </button>
+            </div>
+            <button onclick="deleteSavedWord('${item.word}')" class="text-rose-500 hover:text-rose-700 transition p-1" title="Remove Word">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function setFolderFilter(folder) {
+      appState.currentFolderFilter = folder;
+      renderSavedWords();
+    }
+
+    function filterSavedWords(text) {
+      renderSavedWords();
+    }
+
+    function reassignWordFolder(word, newFolder) {
+      const item = appState.savedWords.find(w => w.word === word);
+      if (item) {
+        item.folder = newFolder;
+        saveWordsToStorage();
+        renderSavedWords();
+        updatePillCounts();
+      }
+    }
+
+    function deleteSavedWord(word) {
+      appState.savedWords = appState.savedWords.filter(w => w.word !== word);
+      saveWordsToStorage();
+      renderSavedWords();
+      updatePillCounts();
+    }
+
+    function openCreateFolderModal() {
+      document.getElementById('new-folder-name').value = '';
+      toggleNewFolderModal(true);
+    }
+
+    function toggleNewFolderModal(show) {
+      const modal = document.getElementById('modal-new-folder');
+      modal.classList.toggle('hidden', !show);
+      modal.classList.toggle('flex', show);
+      if (show) document.getElementById('new-folder-name').focus();
+    }
+
+    function createFolderSubmit() {
+      const input = document.getElementById('new-folder-name');
+      const val = input.value.trim();
+      if (!val) return;
+      if (!appState.folders.includes(val)) {
+        appState.folders.push(val);
+        saveWordsToStorage();
+        renderSavedWords();
+        populateQuizListSelector();
+      }
+      toggleNewFolderModal(false);
+    }
+
+    function exportWordlistsJSON() {
+      const payload = {
+        folders: appState.folders,
+        savedWords: appState.savedWords,
+        exportedAt: new Date().toISOString()
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `lexis_wordlists_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importWordlistsJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed && Array.isArray(parsed.savedWords)) {
+            // Merge without duplicates
+            const existingWords = new Set(appState.savedWords.map(w => w.word.toLowerCase()));
+            parsed.savedWords.forEach(w => {
+              if (!existingWords.has(w.word.toLowerCase())) {
+                appState.savedWords.push(w);
+              }
+            });
+            if (Array.isArray(parsed.folders)) {
+              appState.folders = [...new Set([...appState.folders, ...parsed.folders])];
+            }
+            saveWordsToStorage();
+            renderSavedWords();
+            updatePillCounts();
+            alertUser("Vocabulary backup restored successfully!");
+          }
+        } catch (err) {
+          alertUser("Invalid JSON backup file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* =========================================================================
+       QUIZ & FLASHCARD ENGINE
+       ========================================================================= */
+    function populateQuizListSelector() {
+      const selector = document.getElementById('quiz-list-selector');
+      selector.innerHTML = `
+        <option value="All">All Saved Words (${appState.savedWords.length})</option>
+        ${appState.folders.map(f => {
+          const c = appState.savedWords.filter(w => w.folder === f).length;
+          return `<option value="${f}">${f} (${c})</option>`;
+        }).join('')}
+      `;
+    }
+
+    function getEligibleQuizWords() {
+      const selector = document.getElementById('quiz-list-selector');
+      const selectedFolder = selector.value;
+      let words = appState.savedWords;
+      if (selectedFolder !== 'All') {
+        words = words.filter(w => w.folder === selectedFolder);
+      }
+      return words;
+    }
+
+    function startQuizSession() {
+      const eligible = getEligibleQuizWords();
+      const mode = document.querySelector('input[name="quiz-mode"]:checked').value;
+
+      if (eligible.length < 4 && mode !== 'flashcards') {
+        alertUser("You need at least 4 saved words in this list to generate a multiple-choice quiz!");
+        return;
+      }
+      if (eligible.length === 0) {
+        alertUser("Add at least 1 word to your list to begin flashcards!");
+        return;
+      }
+
+      // Hide setup & summary
+      document.getElementById('quiz-setup-panel').classList.add('hidden');
+      document.getElementById('quiz-results-screen').classList.add('hidden');
+
+      if (mode === 'flashcards') {
+        startFlashcards(eligible);
+      } else {
+        startMultipleChoiceQuiz(eligible, mode);
+      }
+    }
+
+    /**
+     * MULTIPLE CHOICE ENGINE (Def -> Word or Word -> Def)
+     */
+    function startMultipleChoiceQuiz(wordsList, mode) {
+      document.getElementById('quiz-active-mcq').classList.remove('hidden');
+      document.getElementById('quiz-active-flashcards').classList.add('hidden');
+
+      const shuffledWords = [...wordsList].sort(() => 0.5 - Math.random());
+      const totalQuestions = Math.min(10, shuffledWords.length);
+      const questions = [];
+
+      for (let i = 0; i < totalQuestions; i++) {
+        const target = shuffledWords[i];
+        
+        // Pick 3 distractors
+        const distractors = wordsList
+          .filter(w => w.word !== target.word)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3);
+
+        const options = [target, ...distractors].sort(() => 0.5 - Math.random());
+        questions.push({ target, options });
+      }
+
+      appState.quizSession = {
+        active: true,
+        mode: mode,
+        questions: questions,
+        currentIndex: 0,
+        score: 0,
+        answered: false
+      };
+
+      renderCurrentMCQ();
+    }
+
+    function renderCurrentMCQ() {
+      const session = appState.quizSession;
+      const q = session.questions[session.currentIndex];
+      session.answered = false;
+
+      // Update counters & progress
+      const progressPercent = ((session.currentIndex + 1) / session.questions.length) * 100;
+      document.getElementById('quiz-progress-bar').style.width = `${progressPercent}%`;
+      document.getElementById('quiz-question-counter').textContent = `${session.currentIndex + 1} / ${session.questions.length}`;
+      document.getElementById('quiz-feedback-banner').classList.add('hidden');
+
+      const promptLabel = document.getElementById('quiz-prompt-label');
+      const promptText = document.getElementById('quiz-prompt-text');
+      const promptPart = document.getElementById('quiz-prompt-part');
+      const optionsContainer = document.getElementById('quiz-options-container');
+
+      if (session.mode === 'def-to-word') {
+        promptLabel.textContent = "Which word matches this definition?";
+        promptText.innerHTML = `&ldquo;${q.target.rawDefinition || q.target.definition}&rdquo;`;
+        promptText.className = "font-serif text-xl sm:text-2xl font-medium text-stone-800 dark:text-zinc-100 max-w-2xl mx-auto leading-relaxed";
+        promptPart.textContent = `Part of speech: ${q.target.partOfSpeech}`;
+
+        optionsContainer.innerHTML = q.options.map(opt => `
+          <button onclick="handleMCQSelection('${opt.word}')" class="mcq-option-btn p-4 rounded-xl border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-800/60 hover:bg-stone-100 dark:hover:bg-zinc-800 text-stone-900 dark:text-white font-serif text-lg font-bold text-left transition flex items-center justify-between">
+            <span class="capitalize">${opt.displayWord || opt.word}</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-stone-400"></i>
+          </button>
+        `).join('');
+      } else {
+        // Word to Definition
+        promptLabel.textContent = "Select the correct definition for:";
+        promptText.textContent = q.target.displayWord || q.target.word;
+        promptText.className = "font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white capitalize";
+        promptPart.textContent = `${q.target.partOfSpeech} ${q.target.phonetic ? `• \\${q.target.phonetic}\\` : ''}`;
+
+        optionsContainer.innerHTML = q.options.map(opt => `
+          <button onclick="handleMCQSelection('${opt.word}')" class="mcq-option-btn p-4 rounded-xl border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-800/60 hover:bg-stone-100 dark:hover:bg-zinc-800 text-stone-800 dark:text-zinc-200 font-serif text-sm text-left transition leading-relaxed">
+            <span class="line-clamp-3">${opt.rawDefinition || opt.definition}</span>
+          </button>
+        `).join('');
+      }
+
+      lucide.createIcons();
+    }
+
+    function handleMCQSelection(selectedWord) {
+      const session = appState.quizSession;
+      if (session.answered) return;
+      session.answered = true;
+
+      const q = session.questions[session.currentIndex];
+      const isCorrect = selectedWord.toLowerCase() === q.target.word.toLowerCase();
+      if (isCorrect) session.score++;
+
+      // Highlight selected and correct buttons
+      const buttons = document.querySelectorAll('.mcq-option-btn');
+      buttons.forEach(btn => {
+        btn.disabled = true;
+      });
+
+      const banner = document.getElementById('quiz-feedback-banner');
+      const icon = document.getElementById('quiz-feedback-icon');
+      const text = document.getElementById('quiz-feedback-text');
+
+      banner.classList.remove('hidden');
+      if (isCorrect) {
+        banner.className = "p-4 rounded-xl flex items-center justify-between transition-all bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200";
+        icon.className = "w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs bg-emerald-600 text-white";
+        icon.innerHTML = "&#10003;";
+        text.textContent = "Accurate! Excellent grasp.";
+      } else {
+        banner.className = "p-4 rounded-xl flex items-center justify-between transition-all bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200";
+        icon.className = "w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs bg-rose-600 text-white";
+        icon.innerHTML = "&#10007;";
+        text.textContent = `Correct answer was: "${q.target.displayWord || q.target.word}"`;
+      }
+    }
+
+    function advanceToNextQuestion() {
+      const session = appState.quizSession;
+      session.currentIndex++;
+      if (session.currentIndex < session.questions.length) {
+        renderCurrentMCQ();
+      } else {
+        finishQuizSession(session.score, session.questions.length);
+      }
+    }
+
+    /**
+     * INTERACTIVE FLASHCARDS ENGINE
+     */
+    function startFlashcards(wordsList) {
+      document.getElementById('quiz-active-mcq').classList.add('hidden');
+      document.getElementById('quiz-active-flashcards').classList.remove('hidden');
+
+      const shuffled = [...wordsList].sort(() => 0.5 - Math.random());
+      appState.flashcardSession = {
+        cards: shuffled,
+        currentIndex: 0,
+        isFlipped: false,
+        knownCount: 0
+      };
+
+      renderCurrentFlashcard();
+    }
+
+    function renderCurrentFlashcard() {
+      const s = appState.flashcardSession;
+      const card = s.cards[s.currentIndex];
+      s.isFlipped = false;
+
+      // Reset 3D flip card transform
+      const inner = document.getElementById('flashcard-inner');
+      inner.classList.remove('rotate-y-180');
+
+      document.getElementById('fc-progress-label').textContent = `Card ${s.currentIndex + 1} of ${s.cards.length}`;
+      document.getElementById('fc-word-front').textContent = card.displayWord || card.word;
+      document.getElementById('fc-phonetic-front').textContent = card.phonetic ? `\\${card.phonetic}\\` : '';
+      document.getElementById('fc-fl-front').textContent = card.partOfSpeech || 'n';
+
+      document.getElementById('fc-word-mini').textContent = card.displayWord || card.word;
+      document.getElementById('fc-def-back').textContent = card.rawDefinition || card.definition;
+      
+      const synText = (card.synonyms && card.synonyms.length > 0) ? `Synonyms: ${card.synonyms.slice(0, 4).join(', ')}` : '';
+      document.getElementById('fc-synonyms-back').textContent = synText;
+
+      const audioBtn = document.getElementById('fc-audio-btn');
+      audioBtn.style.display = card.audioUrl ? 'block' : 'none';
+
+      lucide.createIcons();
+    }
+
+    function flipCurrentFlashcard() {
+      const s = appState.flashcardSession;
+      s.isFlipped = !s.isFlipped;
+      const inner = document.getElementById('flashcard-inner');
+      inner.classList.toggle('rotate-y-180', s.isFlipped);
+    }
+
+    function playCurrentFlashcardAudio() {
+      const s = appState.flashcardSession;
+      const card = s.cards[s.currentIndex];
+      if (card && card.audioUrl) {
+        playAudio(card.audioUrl);
+      }
+    }
+
+    function gradeFlashcard(knewIt) {
+      const s = appState.flashcardSession;
+      if (knewIt) s.knownCount++;
+
+      s.currentIndex++;
+      if (s.currentIndex < s.cards.length) {
+        renderCurrentFlashcard();
+      } else {
+        finishQuizSession(s.knownCount, s.cards.length);
+      }
+    }
+
+    function finishQuizSession(correct, total) {
+      document.getElementById('quiz-active-mcq').classList.add('hidden');
+      document.getElementById('quiz-active-flashcards').classList.add('hidden');
+      const resultsScreen = document.getElementById('quiz-results-screen');
+      resultsScreen.classList.remove('hidden');
+
+      const pct = Math.round((correct / total) * 100) || 0;
+      document.getElementById('quiz-result-score').textContent = `${pct}%`;
+      document.getElementById('quiz-result-counts').textContent = `${correct} / ${total}`;
+      lucide.createIcons();
+    }
+
+    function quitQuiz() {
+      document.getElementById('quiz-active-mcq').classList.add('hidden');
+      document.getElementById('quiz-active-flashcards').classList.add('hidden');
+      document.getElementById('quiz-results-screen').classList.add('hidden');
+      document.getElementById('quiz-setup-panel').classList.remove('hidden');
+      populateQuizListSelector();
+    }
+
+    /* =========================================================================
+       SETTINGS, TABS, THEME & SYSTEM INITIALIZATION
+       ========================================================================= */
+    function switchTab(tabName) {
+      appState.activeTab = tabName;
+
+      // View sections
+      document.getElementById('view-lookup').classList.toggle('hidden', tabName !== 'lookup');
+      document.getElementById('view-wordlists').classList.toggle('hidden', tabName !== 'wordlists');
+      document.getElementById('view-quiz').classList.toggle('hidden', tabName !== 'quiz');
+
+      // Button styles
+      const activeClass = 'bg-stone-200/70 dark:bg-zinc-800 text-stone-900 dark:text-white';
+      const inactiveClass = 'text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-white';
+
+      const btnLookup = document.getElementById('nav-lookup-btn');
+      const btnLists = document.getElementById('nav-wordlists-btn');
+      const btnQuiz = document.getElementById('nav-quiz-btn');
+
+      btnLookup.className = `px-3 py-1.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 ${tabName === 'lookup' ? activeClass : inactiveClass}`;
+      btnLists.className = `px-3 py-1.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 ${tabName === 'wordlists' ? activeClass : inactiveClass}`;
+      btnQuiz.className = `px-3 py-1.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 ${tabName === 'quiz' ? activeClass : inactiveClass}`;
+
+      if (tabName === 'wordlists') {
+        renderSavedWords();
+      } else if (tabName === 'quiz') {
+        quitQuiz();
+        populateQuizListSelector();
+      }
+      lucide.createIcons();
+    }
+
+    function toggleSettingsModal(show) {
+      const modal = document.getElementById('modal-settings');
+      modal.classList.toggle('hidden', !show);
+      modal.classList.toggle('flex', show);
+      if (show) {
+        document.getElementById('setting-api-key').value = appState.apiKey;
+        document.getElementById('setting-use-fallback').checked = appState.useFallback;
+      }
+    }
+
+    function saveApiSettings() {
+      const keyVal = document.getElementById('setting-api-key').value.trim();
+      const fbVal = document.getElementById('setting-use-fallback').checked;
+
+      appState.apiKey = keyVal;
+      appState.useFallback = fbVal;
+
+      localStorage.setItem(STORAGE_KEYS.API_KEY, keyVal);
+      localStorage.setItem(STORAGE_KEYS.USE_FALLBACK, fbVal);
+
+      updateSourceLabel();
+      toggleSettingsModal(false);
+      alertUser("Engine preferences saved.");
+    }
+
+    function clearWordCache() {
+      appState.cachedWords = {};
+      localStorage.removeItem(STORAGE_KEYS.CACHED_WORDS);
+      updateCacheCountDisplay();
+      alertUser("Cached word dictionary wiped.");
+    }
+
+    function updateSourceLabel() {
+      const label = document.getElementById('current-source-label');
+      const dot = document.getElementById('api-status-dot');
+      if (appState.apiKey && appState.apiKey.length > 5) {
+        label.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> <span>Mode: <strong class="text-stone-700 dark:text-zinc-300">Merriam-Webster Collegiate API</strong> (Active)</span>`;
+        dot.className = "absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900";
+      } else {
+        label.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> <span>Mode: <strong class="text-stone-700 dark:text-zinc-300">Free Lexical Engine</strong> (Ready, no key required)</span>`;
+        dot.className = "absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-zinc-900";
+      }
+    }
+
+    function addRecentSearch(word) {
+      appState.recentSearches = [word, ...appState.recentSearches.filter(w => w.toLowerCase() !== word.toLowerCase())].slice(0, 6);
+      localStorage.setItem(STORAGE_KEYS.RECENT_SEARCHES, JSON.stringify(appState.recentSearches));
+      renderRecentSearches();
+    }
+
+    function renderRecentSearches() {
+      const cont = document.getElementById('recent-tags-container');
+      if (!cont) return;
+      cont.innerHTML = appState.recentSearches.map(w => `
+        <button onclick="quickLookup('${w}')" class="bg-stone-100 hover:bg-stone-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-stone-700 dark:text-zinc-300 px-2 py-0.5 rounded font-mono text-[11px] transition">
+          ${w}
+        </button>
+      `).join('');
+    }
+
+    function updatePillCounts() {
+      document.getElementById('saved-count-pill').textContent = appState.savedWords.length;
+    }
+
+    // In-app gentle toast notification instead of intrusive alert()
+    function alertUser(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-6 right-6 z-50 bg-stone-900 dark:bg-white text-white dark:text-stone-900 px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 transform translate-y-2';
+      toast.innerHTML = `<i data-lucide="info" class="w-4 h-4"></i><span>${msg}</span>`;
+      document.body.appendChild(toast);
+      lucide.createIcons();
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Dark mode handler
+    const themeBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+
+    function applyTheme(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeIcon.setAttribute('data-lucide', 'moon');
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeIcon.setAttribute('data-lucide', 'sun');
+      }
+      localStorage.setItem(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
+      lucide.createIcons();
+    }
+
+    themeBtn.addEventListener('click', () => {
+      const isDark = !document.documentElement.classList.contains('dark');
+      applyTheme(isDark);
+    });
+
+    // On Load Lifecycle
+    window.addEventListener('DOMContentLoaded', () => {
+      // Determine initial theme
+      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+
+      updateSourceLabel();
+      updateCacheCountDisplay();
+      updatePillCounts();
+      renderRecentSearches();
+      populateQuizListSelector();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
